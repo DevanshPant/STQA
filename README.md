@@ -34,6 +34,25 @@ over:
 flask --app run init-db
 ```
 
+## Deploying (PythonAnywhere)
+
+1. In a PythonAnywhere **Bash console**:
+   ```bash
+   git clone https://github.com/DevanshPant/STQA.git
+   pip install --user flask
+   ```
+2. **Web** tab → *Add a new web app* → *Manual configuration* → latest Python.
+3. Set **Source code** and **Working directory** to `/home/<username>/STQA`.
+4. Open the **WSGI configuration file** link, delete everything in it and put:
+   ```python
+   import sys
+   sys.path.insert(0, "/home/<username>/STQA")
+   from wsgi import application
+   ```
+5. Turn on **Force HTTPS**, then hit **Reload**.
+
+To update the live site later: `cd ~/STQA && git pull`, then Reload.
+
 ## Running the tests
 
 ```bash
