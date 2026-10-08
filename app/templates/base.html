@@ -1,0 +1,55 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{% block title %}Voltwise{% endblock %} · Voltwise</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600&family=Karla:wght@400;500;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+  <link rel="icon" href="{{ url_for('static', filename='favicon.svg') }}" type="image/svg+xml">
+</head>
+<body class="{% block body_class %}{% endblock %}">
+{% if g.user %}
+  <header class="topbar">
+    <div class="wrap topbar-inner">
+      <a class="wordmark" href="{{ url_for('views.dashboard') }}">volt<em>wise</em></a>
+      <nav class="mainnav">
+        {% set ep = request.endpoint %}
+        <a href="{{ url_for('views.dashboard') }}" {% if ep == 'views.dashboard' %}class="on"{% endif %}>Overview</a>
+        <a href="{{ url_for('views.vehicles') }}" {% if ep in ('views.vehicles', 'views.vehicle') %}class="on"{% endif %}>Vehicles</a>
+        <a href="{{ url_for('views.saved') }}" {% if ep == 'views.saved' %}class="on"{% endif %}>Saved</a>
+        <a href="{{ url_for('views.trips') }}" {% if ep == 'views.trips' %}class="on"{% endif %}>Trip log</a>
+      </nav>
+      <div class="who">
+        <a href="{{ url_for('auth.account') }}" class="avatar" title="Account settings">{{ g.user['name'][:1]|upper }}</a>
+        <form method="post" action="{{ url_for('auth.logout') }}">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+          <button class="linkbtn" type="submit">Log out</button>
+        </form>
+      </div>
+    </div>
+  </header>
+{% endif %}
+
+<main class="{% block main_class %}wrap page{% endblock %}">
+  {% with msgs = get_flashed_messages(with_categories=true) %}
+    {% if msgs %}
+      <div class="flashes">
+        {% for cat, msg in msgs %}<p class="flash flash-{{ cat }}" role="status">{{ msg }}</p>{% endfor %}
+      </div>
+    {% endif %}
+  {% endwith %}
+  {% block content %}{% endblock %}
+</main>
+
+{% if g.user %}
+<footer class="foot wrap">
+  <span>Data: EV energy efficiency dataset, model years 2012&ndash;2026.</span>
+  <span>STQA mini project</span>
+</footer>
+{% endif %}
+<script src="{{ url_for('static', filename='app.js') }}"></script>
+</body>
+</html>

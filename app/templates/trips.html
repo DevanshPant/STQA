@@ -1,0 +1,83 @@
+{% extends "base.html" %}
+{% block title %}Trip log{% endblock %}
+{% macro err(name) %}{% if errors.get(name) %}<small class="field-error">{{ errors[name] }}</small>{% endif %}{% endmacro %}
+{% block content %}
+<div class="pagehead">
+  <div>
+    <p class="eyebrow">Trip log</p>
+    <h1>What your drives cost</h1>
+  </div>
+</div>
+
+<div class="grid-3">
+  <section class="card">
+    <h2>New trip</h2>
+    <form method="post" action="{{ url_for('views.trips') }}" novalidate>
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+      <label class="field {% if errors.vehicle_id %}has-error{% endif %}"><span>Vehicle</span>
+        <select name="vehicle_id" required>
+          <option value="">Choose&hellip;</option>
+          {% if picks %}
+          <optgroup label="Your cars">
+            {% for p in picks %}<option value="{{ p.id }}" {% if preselect == p.id|string %}selected{% endif %}>{{ p.model_year }} {{ p.make }} {{ p.model }}</option>{% endfor %}
+          </optgroup>
+          {% endif %}
+          <optgroup label="{{ latest[0].model_year if latest else '' }} models">
+            {% for p in latest %}<option value="{{ p.id }}" {% if preselect == p.id|string and not picks %}selected{% endif %}>{{ p.make }} {{ p.model }}</option>{% endfor %}
+          </optgroup>
+        </select>
+        {{ err('vehicle_id') }}
+      </label>
+      <label class="field {% if errors.distance_km %}has-error{% endif %}"><span>Distance (km)</span>
+        <input type="number" name="distance_km" min="1" max="5000" step="any" value="{{ form.get('distance_km', '') }}" required>
+        {{ err('distance_km') }}
+      </label>
+      <label class="field {% if errors.price_per_kwh %}has-error{% endif %}"><span>Price per kWh (₹)</span>
+        <input type="number" name="price_per_kwh" min="0.01" max="100" step="0.01" value="{{ form.get('price_per_kwh', g.user['price_per_kwh']) }}" required>
+        {{ err('price_per_kwh') }}
+      </label>
+      <label class="field {% if errors.label %}has-error{% endif %}"><span>Label <i class="muted">(optional)</i></span>
+        <input type="text" name="label" maxlength="60" value="{{ form.get('label', '') }}" placeholder="Weekend trip to Lonavala">
+        {{ err('label') }}
+      </label>
+      <button class="btn btn-wide" type="submit">Calculate &amp; log</button>
+      <p class="muted small">Can't find your car? Save it from the <a href="{{ url_for('views.vehicles') }}">vehicle list</a> first and it'll show up here.</p>
+    </form>
+  </section>
+
+  <section class="span-2 stack">
+    <div class="stats stats-3">
+      <div class="stat"><span class="stat-n">{{ "{:,.0f}".format(totals.km) }}<small> km</small></span><span class="stat-l">logged</span></div>
+      <div class="stat"><span class="stat-n">{{ "{:,.1f}".format(totals.kwh) }}<small> kWh</small></span><span class="stat-l">energy used</span></div>
+      <div class="stat"><span class="stat-n">{{ totals.cost|money }}</span><span class="stat-l">total spent</span></div>
+    </div>
+
+    {% if rows %}
+    <div class="card flush scroll-x">
+      <table class="tbl">
+        <thead><tr><th>Trip</th><th>Car</th><th class="num">Distance</th><th class="num">Energy</th><th class="num">Cost</th><th></th></tr></thead>
+        <tbody>
+        {% for t in rows %}
+          <tr>
+            <td>{{ t.label }}<br><small class="muted">{{ t.created_at[:10] }}</small></td>
+            <td><a href="{{ url_for('views.vehicle', vehicle_id=t.vehicle_id) }}">{{ t.model_year }} {{ t.make }} {{ t.model }}</a></td>
+            <td class="num">{{ "%g"|format(t.distance_km) }} km</td>
+            <td class="num">{{ t.energy_kwh }} kWh</td>
+            <td class="num"><b>{{ t.cost|money }}</b><br><small class="muted">@ {{ t.price_per_kwh|money }}</small></td>
+            <td class="num">
+              <form method="post" action="{{ url_for('views.delete_trip', trip_id=t.id) }}" data-confirm="Delete this trip?">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <button class="linkbtn danger" type="submit">Delete</button>
+              </form>
+            </td>
+          </tr>
+        {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    {% else %}
+      <div class="empty card"><p>No trips yet. Fill in the form to log your first one.</p></div>
+    {% endif %}
+  </section>
+</div>
+{% endblock %}

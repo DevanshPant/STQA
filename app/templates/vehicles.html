@@ -1,0 +1,91 @@
+{% extends "base.html" %}
+{% block title %}Vehicles{% endblock %}
+{% block content %}
+<div class="pagehead">
+  <div>
+    <p class="eyebrow">Vehicles</p>
+    <h1>{{ "{:,}".format(total) }} match{{ "" if total == 1 else "es" }}</h1>
+  </div>
+</div>
+
+<form class="filters" method="get" action="{{ url_for('views.vehicles') }}">
+  <label class="field grow"><span>Search</span>
+    <input type="search" name="q" value="{{ f.q }}" placeholder="Make or model, e.g. Ioniq">
+  </label>
+  <label class="field"><span>Make</span>
+    <select name="make"><option value="">Any</option>
+      {% for m in opts.makes %}<option {% if m == f.make %}selected{% endif %}>{{ m }}</option>{% endfor %}
+    </select>
+  </label>
+  <label class="field"><span>Class</span>
+    <select name="vclass"><option value="">Any</option>
+      {% for c in opts.classes %}<option {% if c == f.vclass %}selected{% endif %}>{{ c }}</option>{% endfor %}
+    </select>
+  </label>
+  <label class="field"><span>Year</span>
+    <select name="year"><option value="">Any</option>
+      {% for y in opts.years %}<option {% if y == f.year %}selected{% endif %}>{{ y }}</option>{% endfor %}
+    </select>
+  </label>
+  <label class="field narrow"><span>Min km/kWh</span>
+    <input type="number" name="min_eff" step="0.1" min="0" value="{{ f.min_eff if f.min_eff is not none else '' }}">
+  </label>
+  <label class="field"><span>Sort by</span>
+    <select name="sort">
+      {% for key, label in [('efficiency','Most efficient'),('efficiency_asc','Least efficient'),('newest','Newest'),('oldest','Oldest'),('power','Motor power'),('charge','Fastest recharge'),('name','Name')] %}
+        <option value="{{ key }}" {% if key == f.sort %}selected{% endif %}>{{ label }}</option>
+      {% endfor %}
+    </select>
+  </label>
+  <div class="filter-actions">
+    <button class="btn" type="submit">Apply</button>
+    {% if args %}<a class="small" href="{{ url_for('views.vehicles') }}">Clear</a>{% endif %}
+  </div>
+</form>
+
+{% if rows %}
+<div class="card flush scroll-x">
+  <table class="tbl">
+    <thead>
+      <tr><th>Year</th><th>Make &amp; model</th><th>Class</th><th class="num">Motor</th><th class="num">Recharge</th><th class="num">km/kWh</th><th></th></tr>
+    </thead>
+    <tbody>
+    {% for v in rows %}
+      <tr>
+        <td>{{ v.model_year }}</td>
+        <td><a href="{{ url_for('views.vehicle', vehicle_id=v.id) }}"><b>{{ v.make }}</b> {{ v.model }}</a></td>
+        <td class="muted">{{ v.vehicle_class }}</td>
+        <td class="num">{{ v.motor_kw }} kW</td>
+        <td class="num">{{ v.recharge_hours|round(1) }} h</td>
+        <td class="num"><span class="eff">{{ "%.2f"|format(v.km_per_kwh) }}</span></td>
+        <td class="num">
+          <form method="post" action="{{ url_for('views.toggle_save', vehicle_id=v.id) }}">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <input type="hidden" name="next" value="{{ request.full_path }}">
+            {% if v.id in saved_ids %}
+              <button class="star on" title="Remove from saved" aria-label="Remove from saved">&#9733;</button>
+            {% else %}
+              <button class="star" title="Save" aria-label="Save">&#9734;</button>
+            {% endif %}
+          </form>
+        </td>
+      </tr>
+    {% endfor %}
+    </tbody>
+  </table>
+</div>
+
+{% if pages > 1 %}
+<nav class="pager">
+  {% if page > 1 %}<a href="{{ url_for('views.vehicles', page=page-1, **args) }}">&larr; Previous</a>{% else %}<span></span>{% endif %}
+  <span class="muted">Page {{ page }} of {{ pages }}</span>
+  {% if page < pages %}<a href="{{ url_for('views.vehicles', page=page+1, **args) }}">Next &rarr;</a>{% else %}<span></span>{% endif %}
+</nav>
+{% endif %}
+{% else %}
+  <div class="empty card">
+    <p>No vehicles match those filters.</p>
+    <a href="{{ url_for('views.vehicles') }}">Reset filters</a>
+  </div>
+{% endif %}
+{% endblock %}

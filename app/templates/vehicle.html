@@ -1,0 +1,73 @@
+{% extends "base.html" %}
+{% block title %}{{ v.make }} {{ v.model }}{% endblock %}
+{% block content %}
+<p class="crumbs"><a href="{{ url_for('views.vehicles') }}">Vehicles</a> / <a href="{{ url_for('views.vehicles', make=v.make) }}">{{ v.make }}</a></p>
+<div class="pagehead">
+  <div>
+    <p class="eyebrow">{{ v.model_year }} &middot; {{ v.vehicle_class }}</p>
+    <h1>{{ v.make }} {{ v.model }}</h1>
+  </div>
+  <form method="post" action="{{ url_for('views.toggle_save', vehicle_id=v.id) }}">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    {% if is_saved %}
+      <button class="btn btn-ghost" type="submit">&#9733; Saved</button>
+    {% else %}
+      <button class="btn" type="submit">&#9734; Save</button>
+    {% endif %}
+  </form>
+</div>
+
+<section class="stats">
+  <div class="stat"><span class="stat-n">{{ "%.2f"|format(v.km_per_kwh) }}</span><span class="stat-l">km per kWh</span></div>
+  <div class="stat"><span class="stat-n">{{ v.motor_kw }}<small> kW</small></span><span class="stat-l">motor output</span></div>
+  <div class="stat"><span class="stat-n">{{ v.recharge_hours|round(1) }}<small> h</small></span><span class="stat-l">full recharge (Level 2)</span></div>
+  <div class="stat"><span class="stat-n">{{ per100[1]|money }}</span><span class="stat-l">per 100 km at {{ g.user['price_per_kwh']|money }}/kWh</span></div>
+</section>
+
+<div class="grid-2">
+  <section class="card">
+    <h2>Against its class</h2>
+    {% set diff = (v.km_per_kwh - avg) / avg * 100 %}
+    <p>{{ v.model_year }} {{ v.vehicle_class|lower }} cars average <b>{{ "%.2f"|format(avg) }} km/kWh</b>.
+      This one is
+      {% if diff|abs < 1 %}right on the average.
+      {% elif diff > 0 %}<b class="good">{{ "%.0f"|format(diff) }}% more efficient</b>.
+      {% else %}<b class="bad">{{ "%.0f"|format(-diff) }}% less efficient</b>.{% endif %}
+    </p>
+    {% set scale = [v.km_per_kwh, avg, best]|max %}
+    <div class="compare">
+      {% for label, val, cls in [("This car", v.km_per_kwh, "me"), ("Class average", avg, "avg"), ("Best in dataset", best, "best")] %}
+        <div class="cmp-row">
+          <span class="cmp-l">{{ label }}</span>
+          <svg viewBox="0 0 100 10" preserveAspectRatio="none"><rect width="{{ (val / scale * 100)|round(1) }}" height="10" rx="2" class="cmp-{{ cls }}"></rect></svg>
+          <span class="cmp-v">{{ "%.2f"|format(val) }}</span>
+        </div>
+      {% endfor %}
+    </div>
+    <p class="muted small">It uses about {{ per100[0] }} kWh to cover 100 km.</p>
+  </section>
+
+  <section class="card">
+    <h2>Quick trip estimate</h2>
+    <form method="post" action="{{ url_for('views.trips') }}" class="inline-form">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+      <input type="hidden" name="vehicle_id" value="{{ v.id }}">
+      <label class="field"><span>Distance (km)</span><input type="number" name="distance_km" min="1" max="5000" step="any" value="100" required></label>
+      <label class="field"><span>Price per kWh (₹)</span><input type="number" name="price_per_kwh" min="0.01" max="100" step="0.01" value="{{ g.user['price_per_kwh'] }}" required></label>
+      <label class="field grow"><span>Label <i class="muted">(optional)</i></span><input type="text" name="label" maxlength="60" placeholder="Pune to Mumbai"></label>
+      <button class="btn" type="submit">Log trip</button>
+    </form>
+  </section>
+</div>
+
+{% if others %}
+<section class="card">
+  <h2>Other model years of the {{ v.model }}</h2>
+  <div class="chips">
+    {% for o in others %}
+      <a class="chip" href="{{ url_for('views.vehicle', vehicle_id=o.id) }}">{{ o.model_year }} <span>{{ "%.2f"|format(o.km_per_kwh) }}</span></a>
+    {% endfor %}
+  </div>
+</section>
+{% endif %}
+{% endblock %}

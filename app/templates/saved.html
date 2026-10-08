@@ -1,0 +1,39 @@
+{% extends "base.html" %}
+{% block title %}Saved{% endblock %}
+{% block content %}
+<div class="pagehead">
+  <div>
+    <p class="eyebrow">Saved</p>
+    <h1>Your shortlist</h1>
+  </div>
+</div>
+
+{% if rows %}
+<div class="savedgrid">
+  {% for v in rows %}
+    <article class="card savedcard">
+      <p class="eyebrow">{{ v.model_year }} &middot; {{ v.vehicle_class }}</p>
+      <h2><a href="{{ url_for('views.vehicle', vehicle_id=v.id) }}">{{ v.make }} {{ v.model }}</a></h2>
+      <dl class="specs">
+        <div><dt>km/kWh</dt><dd>{{ "%.2f"|format(v.km_per_kwh) }}</dd></div>
+        <div><dt>Motor</dt><dd>{{ v.motor_kw }} kW</dd></div>
+        <div><dt>Recharge</dt><dd>{{ v.recharge_hours|round(1) }} h</dd></div>
+      </dl>
+      <div class="savedcard-foot">
+        <a class="small" href="{{ url_for('views.trips', vehicle=v.id) }}">Log a trip</a>
+        <form method="post" action="{{ url_for('views.toggle_save', vehicle_id=v.id) }}">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+          <input type="hidden" name="next" value="{{ url_for('views.saved') }}">
+          <button class="linkbtn danger" type="submit">Remove</button>
+        </form>
+      </div>
+    </article>
+  {% endfor %}
+</div>
+{% else %}
+  <div class="empty card">
+    <p>You haven't saved anything yet.</p>
+    <a href="{{ url_for('views.vehicles') }}">Find a car to shortlist</a>
+  </div>
+{% endif %}
+{% endblock %}

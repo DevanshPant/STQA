@@ -1,0 +1,16 @@
+{% extends "base.html" %}
+{% block title %}{{ code }}{% endblock %}
+{% block content %}
+<div class="errorpage">
+  <p class="err-code">{{ code }}</p>
+  <h1>
+    {% if code == 404 %}That page doesn't exist.
+    {% elif code == 403 %}You can't open that.
+    {% elif code == 405 %}That action isn't allowed here.
+    {% elif code == 400 %}Something was off with that request.
+    {% else %}Something broke on our side.{% endif %}
+  </h1>
+  {% if code == 400 and error.description %}<p class="muted">{{ error.description }}</p>{% endif %}
+  <p><a class="btn" href="{{ url_for('views.index') }}">Back to {{ 'overview' if g.user else 'login' }}</a></p>
+</div>
+{% endblock %}

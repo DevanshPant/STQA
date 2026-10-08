@@ -1,0 +1,103 @@
+{% extends "base.html" %}
+{% block title %}Overview{% endblock %}
+{% block content %}
+<div class="pagehead">
+  <div>
+    <p class="eyebrow">Overview</p>
+    <h1>Hi {{ g.user['name'].split()[0] }}.</h1>
+  </div>
+  <a class="btn btn-ghost" href="{{ url_for('views.vehicles') }}">Browse all vehicles</a>
+</div>
+
+<section class="stats">
+  <div class="stat"><span class="stat-n">{{ "{:,}".format(totals.n) }}</span><span class="stat-l">vehicles in the dataset</span></div>
+  <div class="stat"><span class="stat-n">{{ totals.makes }}</span><span class="stat-l">manufacturers</span></div>
+  <div class="stat"><span class="stat-n">{{ "%.2f"|format(totals.avg_eff) }}</span><span class="stat-l">average km per kWh</span></div>
+  <div class="stat"><span class="stat-n">{{ g.user['price_per_kwh']|money }}</span><span class="stat-l">your price per kWh &middot; <a href="{{ url_for('auth.account') }}">change</a></span></div>
+</section>
+
+<div class="grid-2">
+  <section class="card">
+    <h2>Average efficiency by model year</h2>
+    <p class="muted small">km per kWh, all vehicle classes. Hover a bar for the count.</p>
+    {% set w = 640 %}{% set h = 220 %}{% set n = by_year|length %}{% set slot = w / n %}
+    <svg class="chart" viewBox="0 0 {{ w }} {{ h + 34 }}" role="img" aria-label="Average efficiency by model year">
+      {% for r in by_year %}
+        {% set bh = (r.avg_eff / peak) * (h - 24) %}
+        {% set x = loop.index0 * slot + slot * 0.18 %}
+        <g>
+          <title>{{ r.model_year }}: {{ "%.2f"|format(r.avg_eff) }} km/kWh across {{ r.n }} vehicles</title>
+          <rect x="{{ x }}" y="{{ h - bh }}" width="{{ slot * 0.64 }}" height="{{ bh }}" rx="3" class="bar"></rect>
+          <text x="{{ x + slot * 0.32 }}" y="{{ h - bh - 6 }}" class="bar-v">{{ "%.1f"|format(r.avg_eff) }}</text>
+          <text x="{{ x + slot * 0.32 }}" y="{{ h + 20 }}" class="bar-l">&rsquo;{{ "%02d"|format(r.model_year % 100) }}</text>
+        </g>
+      {% endfor %}
+      <line x1="0" x2="{{ w }}" y1="{{ h }}" y2="{{ h }}" class="axis"></line>
+    </svg>
+  </section>
+
+  <section class="card">
+    <h2>Most efficient, {{ totals.last_year }}</h2>
+    <ol class="ranklist">
+      {% for v in top_latest %}
+        <li>
+          <a href="{{ url_for('views.vehicle', vehicle_id=v.id) }}">
+            <span class="rank">{{ loop.index }}</span>
+            <span class="rk-name">{{ v.make }} {{ v.model }}<small>{{ v.vehicle_class }}</small></span>
+            <span class="rk-val">{{ "%.2f"|format(v.km_per_kwh) }}</span>
+          </a>
+        </li>
+      {% endfor %}
+    </ol>
+  </section>
+</div>
+
+<div class="grid-3">
+  <section class="card span-2">
+    <h2>By vehicle class</h2>
+    <table class="tbl tbl-tight">
+      <thead><tr><th>Class</th><th class="num">Models</th><th class="num">Avg km/kWh</th><th></th></tr></thead>
+      <tbody>
+      {% set top = by_class[0].avg_eff %}
+      {% for c in by_class %}
+        <tr>
+          <td><a href="{{ url_for('views.vehicles', vclass=c.vehicle_class) }}">{{ c.vehicle_class }}</a></td>
+          <td class="num">{{ c.n }}</td>
+          <td class="num">{{ "%.2f"|format(c.avg_eff) }}</td>
+          <td class="barcell"><svg viewBox="0 0 100 8" preserveAspectRatio="none"><rect width="{{ (c.avg_eff / top * 100)|round(1) }}" height="8" rx="2" class="bar"></rect></svg></td>
+        </tr>
+      {% endfor %}
+      </tbody>
+    </table>
+  </section>
+
+  <div class="stack">
+    <section class="card">
+      <h2>Your shortlist</h2>
+      {% if saved %}
+        <ul class="plainlist">
+          {% for v in saved %}
+            <li><a href="{{ url_for('views.vehicle', vehicle_id=v.id) }}">{{ v.model_year }} {{ v.make }} {{ v.model }}</a> <span class="muted">{{ "%.2f"|format(v.km_per_kwh) }}</span></li>
+          {% endfor %}
+        </ul>
+        <a class="small" href="{{ url_for('views.saved') }}">See all saved</a>
+      {% else %}
+        <p class="muted">Nothing saved yet. Open any vehicle and hit <b>Save</b> to keep it here.</p>
+      {% endif %}
+    </section>
+    <section class="card">
+      <h2>Recent trips</h2>
+      {% if recent_trips %}
+        <ul class="plainlist">
+          {% for t in recent_trips %}
+            <li>{{ t.label }} <span class="muted">{{ t.cost|money }}</span></li>
+          {% endfor %}
+        </ul>
+        <a class="small" href="{{ url_for('views.trips') }}">Open trip log</a>
+      {% else %}
+        <p class="muted">No trips logged. <a href="{{ url_for('views.trips') }}">Work out a trip cost</a>.</p>
+      {% endif %}
+    </section>
+  </div>
+</div>
+{% endblock %}

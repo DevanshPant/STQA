@@ -1,0 +1,35 @@
+{% extends "base.html" %}
+{% block title %}Log in{% endblock %}
+{% block body_class %}auth{% endblock %}
+{% block main_class %}auth-grid{% endblock %}
+{% block content %}
+{% include "auth/_side.html" %}
+<section class="auth-main">
+  <div class="auth-card">
+    <h1>Log in</h1>
+    <p class="sub">Welcome back. New here? <a href="{{ url_for('auth.register') }}">Create an account</a>.</p>
+
+    {% if error %}<p class="alert" role="alert">{{ error }}</p>{% endif %}
+
+    <form method="post" action="{{ url_for('auth.login') }}" novalidate>
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+      {% if next %}<input type="hidden" name="next" value="{{ next }}">{% endif %}
+      <label class="field">
+        <span>Email</span>
+        <input type="email" name="email" value="{{ email }}" autocomplete="email" required autofocus>
+      </label>
+      <label class="field">
+        <span>Password</span>
+        <span class="pw">
+          <input type="password" name="password" autocomplete="current-password" required>
+          <button type="button" class="pw-toggle" data-pw-toggle>Show</button>
+        </span>
+      </label>
+      <label class="check">
+        <input type="checkbox" name="remember"> Keep me logged in for two weeks
+      </label>
+      <button class="btn btn-wide" type="submit">Log in</button>
+    </form>
+  </div>
+</section>
+{% endblock %}

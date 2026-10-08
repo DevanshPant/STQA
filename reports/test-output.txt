@@ -1,0 +1,32 @@
+============================= test session starts =============================
+platform win32 -- Python 3.12.6, pytest-9.1.1, pluggy-1.6.0
+rootdir: C:\Users\Devansh Pant\Downloads\STQA
+configfile: pytest.ini
+testpaths: tests
+plugins: anyio-4.4.0, cov-7.1.0
+collected 184 items
+
+tests\test_account.py .................                                  [  9%]
+tests\test_api.py ......................                                 [ 21%]
+tests\test_auth.py .................................                     [ 39%]
+tests\test_security.py ................................                  [ 56%]
+tests\test_units.py ......................................               [ 77%]
+tests\test_vehicles.py ..........................................        [100%]
+
+- generated xml file: C:\Users\Devansh Pant\Downloads\STQA\reports\junit.xml --
+=============================== tests coverage ================================
+_______________ coverage: platform win32, python 3.12.6-final-0 _______________
+
+Name              Stmts   Miss  Cover
+-------------------------------------
+app\__init__.py      45      9    80%
+app\api.py           59      0   100%
+app\auth.py         145      0   100%
+app\db.py            43      1    98%
+app\queries.py       60      0   100%
+app\security.py      86      0   100%
+app\views.py        114      0   100%
+-------------------------------------
+TOTAL               552     10    98%
+Coverage HTML written to dir reports/coverage
+============================ 184 passed in 33.93s =============================

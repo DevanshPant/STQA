@@ -1,0 +1,80 @@
+{% extends "base.html" %}
+{% block title %}Account{% endblock %}
+{% macro err(name) %}{% if errors.get(name) %}<small class="field-error">{{ errors[name] }}</small>{% endif %}{% endmacro %}
+{% block content %}
+<div class="pagehead">
+  <div>
+    <p class="eyebrow">Account</p>
+    <h1>{{ g.user['name'] }}</h1>
+    <p class="muted">{{ g.user['email'] }} &middot; member since {{ g.user['created_at'][:10] }}
+      {% if g.user['last_login_at'] %}&middot; last login {{ g.user['last_login_at'][:16] }} UTC{% endif %}</p>
+  </div>
+</div>
+{% if errors.form %}<p class="alert">{{ errors.form }}</p>{% endif %}
+
+<div class="grid-2">
+  <section class="card">
+    <h2>Profile</h2>
+    <form method="post" novalidate>
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+      <input type="hidden" name="action" value="profile">
+      {% set editing = form.get('action') == 'profile' %}
+      <label class="field {% if errors.name %}has-error{% endif %}"><span>Name</span>
+        <input type="text" name="name" maxlength="60" value="{{ form.get('name') if editing else g.user['name'] }}" required>
+        {{ err('name') }}
+      </label>
+      <label class="field {% if errors.price_per_kwh %}has-error{% endif %}"><span>Electricity price (₹ per kWh)</span>
+        <input type="number" name="price_per_kwh" step="0.01" min="0.01" max="100" value="{{ form.get('price_per_kwh') if editing else g.user['price_per_kwh'] }}" required>
+        {% if errors.price_per_kwh %}{{ err('price_per_kwh') }}{% else %}<small class="hint">Used for every cost estimate. Home tariffs in India are usually ₹6&ndash;10.</small>{% endif %}
+      </label>
+      <button class="btn" type="submit">Save profile</button>
+    </form>
+  </section>
+
+  <section class="card">
+    <h2>Change password</h2>
+    <form method="post" novalidate>
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+      <input type="hidden" name="action" value="password">
+      <label class="field {% if errors.current %}has-error{% endif %}"><span>Current password</span>
+        <input type="password" name="current" autocomplete="current-password" required>{{ err('current') }}
+      </label>
+      <label class="field {% if errors.new %}has-error{% endif %}"><span>New password</span>
+        <input type="password" name="new" autocomplete="new-password" minlength="8" required data-strength>
+        <span class="meter" aria-hidden="true"><i></i></span>
+        {{ err('new') }}
+      </label>
+      <label class="field {% if errors.confirm %}has-error{% endif %}"><span>Confirm new password</span>
+        <input type="password" name="confirm" autocomplete="new-password" required>{{ err('confirm') }}
+      </label>
+      <button class="btn" type="submit">Update password</button>
+    </form>
+  </section>
+</div>
+
+<div class="grid-2">
+  <section class="card">
+    <h2>Sessions</h2>
+    <p class="muted">You have {{ stats.saved }} saved car{{ "" if stats.saved == 1 else "s" }} and {{ stats.trips }} logged trip{{ "" if stats.trips == 1 else "s" }}.</p>
+    <p>Logged in somewhere you shouldn't be? This signs out every browser, including this one.</p>
+    <form method="post">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+      <input type="hidden" name="action" value="signout_all">
+      <button class="btn btn-ghost" type="submit">Sign out everywhere</button>
+    </form>
+  </section>
+
+  <section class="card card-danger">
+    <h2>Delete account</h2>
+    <p>Removes your account, shortlist and trip log for good. There's no undo.</p>
+    <form method="post" data-confirm="Really delete your account? This can't be undone.">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+      <input type="hidden" name="action" value="delete">
+      <label class="field {% if errors.delete %}has-error{% endif %}"><span>Confirm with your password</span>
+        <input type="password" name="password" autocomplete="current-password" required>{{ err('delete') }}
+      </label>
+      <button class="btn btn-danger" type="submit">Delete my account</button>
+    </form>
+  </section>
+</div>
+{% endblock %}

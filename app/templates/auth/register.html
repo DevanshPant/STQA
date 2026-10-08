@@ -1,0 +1,43 @@
+{% extends "base.html" %}
+{% block title %}Create account{% endblock %}
+{% block body_class %}auth{% endblock %}
+{% block main_class %}auth-grid{% endblock %}
+{% macro err(name) %}{% if errors.get(name) %}<small class="field-error">{{ errors[name] }}</small>{% endif %}{% endmacro %}
+{% block content %}
+{% include "auth/_side.html" %}
+<section class="auth-main">
+  <div class="auth-card">
+    <h1>Create an account</h1>
+    <p class="sub">Already have one? <a href="{{ url_for('auth.login') }}">Log in</a>.</p>
+
+    <form method="post" action="{{ url_for('auth.register') }}" novalidate>
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+      <label class="field {% if errors.name %}has-error{% endif %}">
+        <span>Your name</span>
+        <input type="text" name="name" value="{{ form.name }}" maxlength="60" autocomplete="name" required autofocus>
+        {{ err('name') }}
+      </label>
+      <label class="field {% if errors.email %}has-error{% endif %}">
+        <span>Email</span>
+        <input type="email" name="email" value="{{ form.email }}" autocomplete="email" required>
+        {{ err('email') }}
+      </label>
+      <label class="field {% if errors.password %}has-error{% endif %}">
+        <span>Password</span>
+        <span class="pw">
+          <input type="password" name="password" autocomplete="new-password" minlength="8" required data-strength>
+          <button type="button" class="pw-toggle" data-pw-toggle>Show</button>
+        </span>
+        <span class="meter" aria-hidden="true"><i></i></span>
+        {% if errors.password %}{{ err('password') }}{% else %}<small class="hint">8+ characters, with at least one letter and one number.</small>{% endif %}
+      </label>
+      <label class="field {% if errors.confirm %}has-error{% endif %}">
+        <span>Confirm password</span>
+        <input type="password" name="confirm" autocomplete="new-password" required>
+        {{ err('confirm') }}
+      </label>
+      <button class="btn btn-wide" type="submit">Create account</button>
+    </form>
+  </div>
+</section>
+{% endblock %}
