@@ -1,3 +1,6 @@
+import json
+from pathlib import Path
+
 from flask import (Blueprint, abort, current_app, flash, g, redirect,
                    render_template, request, url_for)
 
@@ -171,6 +174,18 @@ def trips():
     ).fetchall()
     return render_template("trips.html", rows=rows, totals=totals, picks=picks, latest=latest,
                            errors=errors, form=request.form, preselect=preselect), (400 if errors else 200)
+
+
+@bp.route("/model")
+@login_required
+def model():
+    # metrics.json and the graphs are produced offline by ml/train.py
+    path = Path(current_app.config["ML_DIR"]) / "metrics.json"
+    try:
+        metrics = json.loads(path.read_text(encoding="utf-8"))
+    except (OSError, ValueError):
+        metrics = None
+    return render_template("model.html", m=metrics)
 
 
 @bp.route("/trips/<int:trip_id>/delete", methods=["POST"])

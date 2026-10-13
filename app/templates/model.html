@@ -1,0 +1,164 @@
+{% extends "base.html" %}
+{% block title %}Model{% endblock %}
+{% macro figure(file, caption, narrow=false) %}
+  <figure class="mlfig{% if narrow %} mlfig-narrow{% endif %}">
+    <a href="{{ url_for('static', filename='ml/' ~ file) }}" target="_blank" rel="noopener" title="Open full size">
+      <img src="{{ url_for('static', filename='ml/' ~ file) }}" alt="{{ caption }}" loading="lazy">
+    </a>
+    <figcaption>{{ caption }} <span class="muted">· click to open full size</span></figcaption>
+  </figure>
+{% endmacro %}
+{% block content %}
+<div class="pagehead">
+  <div>
+    <p class="eyebrow">Model</p>
+    <h1>How the model was trained</h1>
+    <p class="muted">Deep learning on the same EV dataset this site runs on, following DL Experiments 2&ndash;7.
+      Devansh Pant &middot; 16010423028 &middot; Batch B-1</p>
+  </div>
+</div>
+
+{% if not m %}
+  <div class="empty card">
+    <p>The trained model results aren't here yet.</p>
+    <p class="muted small">Run <code>ml/.venv/Scripts/python ml/train.py</code> to train the models and generate the graphs.</p>
+  </div>
+{% else %}
+{% set best = m.regression | selectattr("name", "equalto", m.best) | first %}
+
+<section class="stats">
+  <div class="stat"><span class="stat-n">{{ best.name }}</span><span class="stat-l">best model</span></div>
+  <div class="stat"><span class="stat-n">{{ "%.3f"|format(best.test.r2) }}</span><span class="stat-l">test R² (1.0 = perfect)</span></div>
+  <div class="stat"><span class="stat-n">{{ "%.3f"|format(best.test.mae) }}<small> km/kWh</small></span><span class="stat-l">mean absolute error on unseen cars</span></div>
+  <div class="stat"><span class="stat-n">{{ "%.1f"|format(m.classification.accuracy * 100) }}<small>%</small></span><span class="stat-l">Low / Medium / High classifier accuracy</span></div>
+</section>
+
+<div class="grid-2">
+  <section class="card">
+    <h2>What the model does</h2>
+    <p>Given a car's specifications &mdash; model year, maker, vehicle class, motor power and recharge time &mdash;
+      the network predicts its <b>energy efficiency in km per kWh</b>. That number drives everything else on this site:
+      cost per 100 km, trip costs and comparisons.</p>
+    <p class="muted small">The project concept is battery thermal management, but this dataset has no temperature
+      readings, so &mdash; exactly as in Experiments 2&ndash;7 &mdash; the models are trained on energy efficiency.
+      The same pipeline would take temperature as the target once sensor data is available.</p>
+  </section>
+  <section class="card">
+    <h2>Libraries used</h2>
+    <div class="chips">
+      {% for lib, ver in m.versions.items() %}<span class="chip">{{ lib }} <span>{{ ver }}</span></span>{% endfor %}
+    </div>
+    <p class="muted small">Trained on {{ m.trained_on }} with <code>ml/train.py</code>.</p>
+  </section>
+</div>
+
+<section class="card">
+  <h2>1. Dataset and preprocessing</h2>
+  <ol class="steps">
+    <li><b>Load</b> <code>ev_efficiency.csv</code>: {{ "{:,}".format(m.dataset.rows) }} vehicles, {{ m.dataset.makes }} makers,
+      {{ m.dataset.classes }} vehicle classes, model years {{ m.dataset.years[0] }}&ndash;{{ m.dataset.years[1] }}.
+      Average efficiency {{ m.dataset.target_mean }} km/kWh.</li>
+    <li><b>Clean</b>: trailing spaces removed from maker names (&ldquo;Tesla &rdquo; &rarr; &ldquo;Tesla&rdquo;).</li>
+    <li><b>Feature engineering</b>: added <i>Power rate</i> = motor kW &divide; recharge hours (as in Exp 3).</li>
+    <li><b>Encode</b>: one-hot encoding of vehicle class and maker &rarr; <b>{{ m.dataset.features }} input features</b>.</li>
+    <li><b>Split</b>: {{ m.dataset.train }} cars for training, {{ m.dataset.test }} held back for testing (80 / 20, seed {{ m.hyperparameters.seed }}).</li>
+    <li><b>Scale</b>: StandardScaler on the 4 numeric columns; one-hot columns stay 0/1.</li>
+  </ol>
+</section>
+{{ figure("01_dataset.png", "Fig. 1 — Distribution of energy efficiency and the average by model year.") }}
+{{ figure("02_correlation.png", "Fig. 2 — Correlation between the numeric columns. More motor power and longer recharge time both go with lower efficiency (about −0.46 each).", narrow=true) }}
+
+<section class="card">
+  <h2>2. Models trained</h2>
+  <div class="scroll-x">
+  <table class="tbl tbl-tight">
+    <thead><tr><th>Model</th><th>From</th><th>Architecture</th><th class="num">Parameters</th><th class="num">Epochs run</th></tr></thead>
+    <tbody>
+    {% for r in m.regression %}
+      <tr><td><b>{{ r.name }}</b></td><td class="muted">{{ r.exp }}</td><td>{{ r.arch }}</td>
+          <td class="num">{{ "{:,}".format(r.params) }}</td><td class="num">{{ r.epochs }}</td></tr>
+    {% endfor %}
+      <tr><td><b>LSTM</b></td><td class="muted">Exp 7</td><td>LSTM(50) → Dense(25) → Dense(1), look-back {{ m.lstm.look_back }}</td>
+          <td class="num">{{ "{:,}".format(m.lstm.params) }}</td><td class="num">{{ m.lstm.epochs }}</td></tr>
+      <tr><td><b>Classifier</b></td><td class="muted">Exp 2</td><td>Dense(64) → Dropout → Dense(32) → Dense(3, softmax)</td>
+          <td class="num">{{ "{:,}".format(m.classification.params) }}</td><td class="num">{{ m.classification.epochs }}</td></tr>
+    </tbody>
+  </table>
+  </div>
+  <h2 class="mt">Training settings</h2>
+  <div class="chips">
+    <span class="chip">Optimizer <span>{{ m.hyperparameters.optimizer }}</span></span>
+    <span class="chip">Learning rate <span>{{ m.hyperparameters.learning_rate }}</span></span>
+    <span class="chip">Loss <span>{{ m.hyperparameters.loss }}</span></span>
+    <span class="chip">Batch size <span>{{ m.hyperparameters.batch_size }}</span></span>
+    <span class="chip">Max epochs <span>{{ m.hyperparameters.max_epochs }}</span></span>
+    <span class="chip">Early stopping <span>patience {{ m.hyperparameters.early_stopping_patience }}</span></span>
+  </div>
+  <p class="muted small">Early stopping halts training when the validation loss stops improving and restores the best weights, which is why each model ran a different number of epochs.</p>
+</section>
+{{ figure("03_learning_curves.png", "Fig. 3 — Training vs validation loss for each network. Validation loss flattens instead of rising, so none of the models overfits badly. For DNN + Dropout the training curve sits higher because dropout switches off neurons only while training.") }}
+
+<section class="card">
+  <h2>3. Results on the {{ m.dataset.test }} test cars</h2>
+  <div class="scroll-x">
+  <table class="tbl tbl-tight">
+    <thead><tr><th>Model</th><th class="num">Train R²</th><th class="num">Test MAE</th><th class="num">Test RMSE</th><th class="num">Test R²</th></tr></thead>
+    <tbody>
+    {% for r in m.regression %}
+      <tr {% if r.name == m.best %}class="best"{% endif %}>
+        <td><b>{{ r.name }}</b>{% if r.name == m.best %} <span class="eff">best</span>{% endif %}</td>
+        <td class="num">{{ "%.3f"|format(r.train.r2) }}</td>
+        <td class="num">{{ "%.3f"|format(r.test.mae) }}</td>
+        <td class="num">{{ "%.3f"|format(r.test.rmse) }}</td>
+        <td class="num"><b>{{ "%.3f"|format(r.test.r2) }}</b></td>
+      </tr>
+    {% endfor %}
+    </tbody>
+  </table>
+  </div>
+  <p>The <b>{{ best.name }}</b> explains {{ "%.0f"|format(best.test.r2 * 100) }}% of the variation in efficiency and is off by
+    {{ "%.2f"|format(best.test.mae) }} km/kWh on average &mdash; about {{ "%.0f"|format(best.test.mae / m.dataset.target_mean * 100) }}% of the mean.
+    Every neural network beats the plain linear-regression baseline. Adding dropout did not help here: the dataset is small and the plain DNN was not overfitting to begin with.</p>
+</section>
+{{ figure("04_model_comparison.png", "Fig. 4 — Test MAE and R² for every model. The best model is highlighted.") }}
+{{ figure("05_pred_vs_actual.png", "Fig. 5 — Predicted vs actual efficiency for the best model. Points close to the dashed line are accurate predictions.", narrow=true) }}
+{{ figure("06_residuals.png", "Fig. 6 — Residuals (prediction errors) are centred on zero with no pattern, so the model is not systematically biased.") }}
+
+<section class="card">
+  <h2>4. LSTM on the efficiency sequence (Exp 7)</h2>
+  <p>Rows were ordered by model year and the LSTM learned to predict the next car's efficiency from the previous
+    {{ m.lstm.look_back }}. Test MAE <b>{{ "%.3f"|format(m.lstm.test.mae) }} km/kWh</b>, R² <b>{{ "%.3f"|format(m.lstm.test.r2) }}</b>.</p>
+  <p class="muted small">It does noticeably worse than the DNN because cars within the same year are in no real time order &mdash;
+    the sequence carries little signal. An LSTM becomes the right choice with genuine time-series data, such as battery
+    temperature logged every second.</p>
+</section>
+{{ figure("07_lstm.png", "Fig. 7 — LSTM predictions on training and test parts of the sequence, and its loss per epoch.") }}
+
+<section class="card">
+  <h2>5. Low / Medium / High classifier (Exp 2)</h2>
+  <p>Cars were labelled <b>Low</b> (&lt; 4.8 km/kWh), <b>Medium</b> (4.8&ndash;5.3) or <b>High</b> (&ge; 5.3), and a softmax network
+    learned to classify them. Test accuracy <b>{{ "%.1f"|format(m.classification.accuracy * 100) }}%</b>.</p>
+  <div class="scroll-x">
+  <table class="tbl tbl-tight">
+    <thead><tr><th>Class</th><th class="num">Precision</th><th class="num">Recall</th><th class="num">F1</th><th class="num">Test cars</th></tr></thead>
+    <tbody>
+    {% for name, c in m.classification.per_class.items() %}
+      <tr><td><b>{{ name }}</b></td><td class="num">{{ "%.2f"|format(c.precision) }}</td><td class="num">{{ "%.2f"|format(c.recall) }}</td>
+          <td class="num">{{ "%.2f"|format(c.f1) }}</td><td class="num">{{ c.support }}</td></tr>
+    {% endfor %}
+    </tbody>
+  </table>
+  </div>
+  <p class="muted small">Medium is the hardest class: it is a narrow 0.5 km/kWh band, so cars near either edge get pushed into Low or High.</p>
+</section>
+{{ figure("08_classification.png", "Fig. 8 — Confusion matrix on the test set and accuracy per epoch.") }}
+
+<section class="card">
+  <h2>Reproduce it</h2>
+  <pre class="code">python -m venv ml/.venv
+ml/.venv/Scripts/pip install tensorflow pandas scikit-learn matplotlib seaborn
+ml/.venv/Scripts/python ml/train.py</pre>
+  <p class="muted small">The script retrains every model, saves them to <code>ml/models/</code>, and rewrites the graphs and numbers shown on this page.</p>
+</section>
+{% endif %}
+{% endblock %}

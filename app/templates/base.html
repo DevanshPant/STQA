@@ -21,6 +21,7 @@
         <a href="{{ url_for('views.vehicles') }}" {% if ep in ('views.vehicles', 'views.vehicle') %}class="on"{% endif %}>Vehicles</a>
         <a href="{{ url_for('views.saved') }}" {% if ep == 'views.saved' %}class="on"{% endif %}>Saved</a>
         <a href="{{ url_for('views.trips') }}" {% if ep == 'views.trips' %}class="on"{% endif %}>Trip log</a>
+        <a href="{{ url_for('views.model') }}" {% if ep == 'views.model' %}class="on"{% endif %}>Model</a>
       </nav>
       <div class="who">
         <a href="{{ url_for('auth.account') }}" class="avatar" title="Account settings">{{ g.user['name'][:1]|upper }}</a>

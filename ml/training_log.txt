@@ -1,0 +1,10 @@
+Dataset: (1197, 7)
+Input shape: (51,) train 957 test 240
+FFNN           params    849 epochs 300  test {'mae': 0.2276, 'rmse': 0.299, 'r2': 0.886}
+DNN            params   5953 epochs  78  test {'mae': 0.2146, 'rmse': 0.2849, 'r2': 0.8965}
+DNN + Dropout  params   5953 epochs  56  test {'mae': 0.2588, 'rmse': 0.3311, 'r2': 0.8602}
+1D CNN         params   7889 epochs 119  test {'mae': 0.2492, 'rmse': 0.3259, 'r2': 0.8646}
+Best model: DNN
+LSTM {'mae': 0.3898, 'rmse': 0.5651, 'r2': 0.3514}
+Classifier accuracy 0.8542
+Saved graphs and metrics to C:\Users\Devansh Pant\Downloads\STQA\app\static\ml

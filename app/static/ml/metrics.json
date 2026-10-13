@@ -1,0 +1,178 @@
+{
+  "trained_on": "2026-10-13",
+  "dataset": {
+    "rows": 1197,
+    "makes": 35,
+    "classes": 12,
+    "years": [
+      2012,
+      2026
+    ],
+    "target_mean": 4.454,
+    "features": 51,
+    "train": 957,
+    "test": 240
+  },
+  "hyperparameters": {
+    "optimizer": "Adam",
+    "learning_rate": 0.001,
+    "loss": "MSE",
+    "batch_size": 32,
+    "max_epochs": 300,
+    "early_stopping_patience": 25,
+    "test_split": 0.2,
+    "seed": 7
+  },
+  "regression": [
+    {
+      "name": "Linear regression",
+      "exp": "Baseline",
+      "arch": "scikit-learn LinearRegression",
+      "params": 52,
+      "epochs": "-",
+      "seconds": 0.0,
+      "train": {
+        "mae": 0.2666,
+        "rmse": 0.3459,
+        "r2": 0.8338
+      },
+      "test": {
+        "mae": 0.2886,
+        "rmse": 0.3735,
+        "r2": 0.8221
+      }
+    },
+    {
+      "name": "FFNN",
+      "exp": "Exp 2",
+      "arch": "Dense(16, tanh) → Dense(1)",
+      "params": 849,
+      "epochs": 300,
+      "seconds": 141.9,
+      "train": {
+        "mae": 0.1962,
+        "rmse": 0.258,
+        "r2": 0.9075
+      },
+      "test": {
+        "mae": 0.2276,
+        "rmse": 0.299,
+        "r2": 0.886
+      }
+    },
+    {
+      "name": "DNN",
+      "exp": "Exp 3",
+      "arch": "Dense(64) → Dense(32) → Dense(16), ReLU → Dense(1)",
+      "params": 5953,
+      "epochs": 78,
+      "seconds": 40.3,
+      "train": {
+        "mae": 0.1524,
+        "rmse": 0.2028,
+        "r2": 0.9429
+      },
+      "test": {
+        "mae": 0.2146,
+        "rmse": 0.2849,
+        "r2": 0.8965
+      }
+    },
+    {
+      "name": "DNN + Dropout",
+      "exp": "Exp 5",
+      "arch": "DNN with Dropout(0.2) and L2(1e-4)",
+      "params": 5953,
+      "epochs": 56,
+      "seconds": 31.0,
+      "train": {
+        "mae": 0.2298,
+        "rmse": 0.2956,
+        "r2": 0.8786
+      },
+      "test": {
+        "mae": 0.2588,
+        "rmse": 0.3311,
+        "r2": 0.8602
+      }
+    },
+    {
+      "name": "1D CNN",
+      "exp": "Exp 5",
+      "arch": "Conv1D(32) → Pool → Conv1D(16) → Pool → Dense(32) → Dense(1)",
+      "params": 7889,
+      "epochs": 119,
+      "seconds": 75.8,
+      "train": {
+        "mae": 0.2123,
+        "rmse": 0.2721,
+        "r2": 0.8972
+      },
+      "test": {
+        "mae": 0.2492,
+        "rmse": 0.3259,
+        "r2": 0.8646
+      }
+    }
+  ],
+  "best": "DNN",
+  "lstm": {
+    "look_back": 12,
+    "params": 11701,
+    "epochs": 60,
+    "seconds": 46.3,
+    "train": {
+      "mae": 0.4357,
+      "rmse": 0.6316,
+      "r2": 0.4902
+    },
+    "test": {
+      "mae": 0.3898,
+      "rmse": 0.5651,
+      "r2": 0.3514
+    },
+    "train_size": 948,
+    "test_size": 237
+  },
+  "classification": {
+    "accuracy": 0.8542,
+    "train_accuracy": 0.9018,
+    "epochs": 46,
+    "params": 5507,
+    "per_class": {
+      "Low": {
+        "precision": 0.893,
+        "recall": 0.966,
+        "f1": 0.928,
+        "support": 147
+      },
+      "Medium": {
+        "precision": 0.65,
+        "recall": 0.342,
+        "f1": 0.448,
+        "support": 38
+      },
+      "High": {
+        "precision": 0.82,
+        "recall": 0.909,
+        "f1": 0.862,
+        "support": 55
+      }
+    },
+    "class_counts": {
+      "Low": 788,
+      "Medium": 187,
+      "High": 222
+    }
+  },
+  "versions": {
+    "python": "3.12",
+    "tensorflow": "2.20.0",
+    "keras": "3.15.1",
+    "scikit-learn": "1.9.1",
+    "pandas": "3.0.6",
+    "numpy": "2.5.4",
+    "matplotlib": "3.11.2",
+    "seaborn": "0.13.2"
+  }
+}

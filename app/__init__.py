@@ -38,6 +38,7 @@ def create_app(test_config=None):
         LOCKOUT_MINUTES=15,
         PER_PAGE=25,
         PASSWORD_HASH_METHOD="scrypt",
+        ML_DIR=str(Path(__file__).resolve().parent / "static" / "ml"),
     )
     if test_config:
         app.config.update(test_config)
