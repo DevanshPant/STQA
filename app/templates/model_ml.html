@@ -1,0 +1,217 @@
+{% extends "base.html" %}
+{% block title %}Machine learning{% endblock %}
+{% from "_ml_macros.html" import figure, tabs %}
+{% block content %}
+<div class="pagehead">
+  <div>
+    <p class="eyebrow">Model &middot; Machine learning</p>
+    <h1>Classical ML on the same data</h1>
+    <p class="muted">scikit-learn models following ML Experiments 1&ndash;8, on the same 1,197 cars and the same 80/20 split as the deep learning page.
+      Devansh Pant &middot; 16010423028 &middot; Batch B-1</p>
+  </div>
+  {{ tabs('ml') }}
+</div>
+
+{% if not m %}
+  <div class="empty card">
+    <p>The machine learning results aren't here yet.</p>
+    <p class="muted small">Run <code>ml/.venv/Scripts/python ml/train_ml.py</code> to train the models and generate the graphs.</p>
+  </div>
+{% else %}
+{% set best = m.regression | selectattr("name", "equalto", m.best_ml) | first %}
+{% set best_svm = m.svm.kernels | selectattr("kernel", "equalto", m.svm.best) | first %}
+
+<section class="stats">
+  <div class="stat"><span class="stat-n">{{ best.name }}</span><span class="stat-l">best ML regressor</span></div>
+  <div class="stat"><span class="stat-n">{{ "%.3f"|format(best.r2) }}</span><span class="stat-l">test R² ({{ "%.3f"|format(best.mae) }} km/kWh MAE)</span></div>
+  <div class="stat"><span class="stat-n">{{ "%.1f"|format(m.decision_tree.accuracy * 100) }}<small>%</small></span><span class="stat-l">Decision Tree accuracy (Low / Medium / High)</span></div>
+  <div class="stat"><span class="stat-n">{{ "%.1f"|format(best_svm.accuracy * 100) }}<small>%</small></span><span class="stat-l">SVM ({{ m.svm.best|upper }} kernel) accuracy</span></div>
+</section>
+
+<section class="card">
+  <h2>Experiments at a glance</h2>
+  <div class="scroll-x">
+  <table class="tbl tbl-tight">
+    <thead><tr><th>Exp</th><th>Topic</th><th>Type</th><th>Key result</th></tr></thead>
+    <tbody>
+      <tr><td>1</td><td><a href="#exp1">Data preprocessing</a></td><td class="muted">Preparation</td><td>{{ m.preprocessing.missing_values }} missing values; {{ m.preprocessing.features }} features after encoding</td></tr>
+      <tr><td>2</td><td><a href="#exp2">Naive Bayes</a></td><td class="muted">Supervised · classification</td><td>{{ "%.1f"|format(m.naive_bayes.accuracy * 100) }}% accuracy</td></tr>
+      <tr><td>3</td><td><a href="#exp2">Decision Tree</a></td><td class="muted">Supervised · classification</td><td>{{ "%.1f"|format(m.decision_tree.accuracy * 100) }}% accuracy, depth {{ m.decision_tree.depth }}</td></tr>
+      <tr><td>4</td><td><a href="#exp4">Gradient descent &amp; feature scaling</a></td><td class="muted">Supervised · regression</td><td>Scaled: converged in {{ m.gradient_descent.scaled_converged_at }} iterations. Raw: diverged</td></tr>
+      <tr><td>5</td><td><a href="#exp5">K-Means</a></td><td class="muted">Unsupervised · clustering</td><td>K = {{ m.kmeans.k }}, silhouette {{ m.kmeans.silhouette[m.kmeans.k|string] }}</td></tr>
+      <tr><td>6</td><td><a href="#exp6">Gaussian Mixture Model</a></td><td class="muted">Probabilistic · latent variables</td><td>{{ m.gmm.components }} hidden states, silhouette {{ m.gmm.silhouette }}</td></tr>
+      <tr><td>7</td><td><a href="#exp7">PCA &amp; t-SNE</a></td><td class="muted">Dimensionality reduction</td><td>{{ m.dimred.original_dims }} &rarr; {{ m.dimred.components_90 }} components keep 90% variance</td></tr>
+      <tr><td>8</td><td><a href="#exp8">SVM</a></td><td class="muted">Kernel method · classification</td><td>{{ m.svm.best|upper }} best: {{ "%.1f"|format(best_svm.accuracy * 100) }}%</td></tr>
+      <tr><td>&ndash;</td><td><a href="#compare">ML vs deep learning</a></td><td class="muted">Regression</td><td>{{ best.name }} R² {{ "%.3f"|format(best.r2) }}</td></tr>
+    </tbody>
+  </table>
+  </div>
+</section>
+
+<!-- ============ Exp 1 ============ -->
+<section class="card" id="exp1">
+  <h2>Exp 1 &mdash; Data preprocessing</h2>
+  <ol class="steps">
+    <li><b>Missing values:</b> checked every column &mdash; {{ m.preprocessing.missing_values }} found, so no imputation was needed (median / mode fill is in place for safety).</li>
+    <li><b>Cleaning:</b> trailing spaces removed from maker names &rarr; {{ m.preprocessing.makes_after_cleaning }} makers.</li>
+    <li><b>Normalisation:</b> Motor (kW) ranges {{ m.preprocessing.motor_raw_range[0] }}&ndash;{{ m.preprocessing.motor_raw_range[1] }}. Min-Max maps it to 0&ndash;1; Z-score gives mean 0 and standard deviation 1.</li>
+    <li><b>Discretization:</b> efficiency split into 4 bins. Equal width gives uneven groups
+      ({% for k, v in m.preprocessing.equal_width.items() %}{{ k }} {{ v }}{% if not loop.last %}, {% endif %}{% endfor %});
+      equal frequency puts about 300 cars in each.</li>
+    <li><b>Feature engineering:</b> new <i>Power rate</i> = motor kW &divide; recharge h, plus one-hot encoding of class and maker &rarr; {{ m.preprocessing.features }} features.</li>
+  </ol>
+</section>
+{{ figure("ml_01_preprocessing.png", "Fig. 1 — Raw vs normalised motor power, and equal-width vs equal-frequency binning of efficiency.") }}
+
+<!-- ============ Exp 2 + 3 ============ -->
+<section class="card" id="exp2">
+  <h2>Exp 2 &amp; 3 &mdash; Naive Bayes and Decision Tree classifiers</h2>
+  <p>Both classify each car as <b>Low</b> (&lt; 4.8 km/kWh), <b>Medium</b> (4.8&ndash;5.3) or <b>High</b> (&ge; 5.3).</p>
+  <div class="grid-2 inner">
+    <div>
+      <h3>Gaussian Naive Bayes</h3>
+      <p>Uses Bayes' theorem and assumes each feature is normally distributed and independent of the others. Trained on the 4 numeric features.</p>
+      <p>Accuracy <b>{{ "%.1f"|format(m.naive_bayes.accuracy * 100) }}%</b>.
+        <span class="muted small">With all {{ m.preprocessing.features }} features it drops to {{ "%.1f"|format(m.naive_bayes.all_features_accuracy * 100) }}%, because 0/1 one-hot columns are not bell-shaped.</span></p>
+    </div>
+    <div>
+      <h3>Decision Tree (Gini)</h3>
+      <p>Splits the data on the feature that best separates the classes at each step. Depth chosen by 5-fold cross-validation on the training set: <b>{{ m.decision_tree.depth }}</b>.</p>
+      <p>Accuracy <b>{{ "%.1f"|format(m.decision_tree.accuracy * 100) }}%</b> (cross-validation {{ "%.1f"|format(m.decision_tree.cv_accuracy * 100) }}%).
+        Most used features: {% for f in m.decision_tree.top_features[:3] %}{{ f.name }}{% if not loop.last %}, {% endif %}{% endfor %}.</p>
+    </div>
+  </div>
+  <div class="scroll-x">
+  <table class="tbl tbl-tight">
+    <thead><tr><th>Class</th><th class="num">NB precision</th><th class="num">NB recall</th><th class="num">Tree precision</th><th class="num">Tree recall</th></tr></thead>
+    <tbody>
+    {% for k in ["Low", "Medium", "High"] %}
+      <tr><td><b>{{ k }}</b></td>
+        <td class="num">{{ "%.2f"|format(m.naive_bayes.per_class[k].precision) }}</td><td class="num">{{ "%.2f"|format(m.naive_bayes.per_class[k].recall) }}</td>
+        <td class="num">{{ "%.2f"|format(m.decision_tree.per_class[k].precision) }}</td><td class="num">{{ "%.2f"|format(m.decision_tree.per_class[k].recall) }}</td></tr>
+    {% endfor %}
+    </tbody>
+  </table>
+  </div>
+</section>
+{{ figure("ml_02_classifiers.png", "Fig. 2 — Confusion matrices for both classifiers, and Decision Tree accuracy as depth grows. Past the chosen depth, training accuracy keeps rising while cross-validation accuracy stalls — that gap is overfitting.") }}
+{{ figure("ml_03_tree.png", "Fig. 3 — The first three levels of the Decision Tree. The very first split is on motor power.") }}
+
+<!-- ============ Exp 4 ============ -->
+<section class="card" id="exp4">
+  <h2>Exp 4 &mdash; Gradient descent and feature scaling</h2>
+  <p>Multiple linear regression (efficiency from model year, motor kW and recharge time) trained with <b>batch gradient descent written from scratch in NumPy</b>, for {{ m.gradient_descent.iterations }} iterations.</p>
+  <ul class="steps">
+    <li><b>Scaled features</b> (Z-score), learning rate 0.1: reached the optimum cost {{ m.gradient_descent.optimal_cost }} in <b>{{ m.gradient_descent.scaled_converged_at }} iterations</b>.</li>
+    <li><b>Raw features</b>, learning rate 1e-8: still at cost {{ m.gradient_descent.raw_final_cost }} after {{ m.gradient_descent.iterations }} iterations &mdash; far from the optimum.</li>
+    <li><b>Raw features</b>, learning rate 1e-6: the cost exploded and <b>diverged within {{ m.gradient_descent.raw_diverged_after }} iterations</b>.</li>
+  </ul>
+  <p class="muted small">Why: model year is around 2,020 while recharge time is around 10, so the cost surface is a long, narrow valley. One learning rate is either too big for the year direction or too small for the others. Scaling makes every feature comparable, so a single learning rate works for all.</p>
+</section>
+{{ figure("ml_04_gradient_descent.png", "Fig. 4 — Cost per iteration (log scale). Scaled features converge almost immediately; raw features crawl or blow up.") }}
+
+<!-- ============ Exp 5 ============ -->
+<section class="card" id="exp5">
+  <h2>Exp 5 &mdash; K-Means clustering</h2>
+  <p>Unsupervised: no labels are given. Cars are grouped by motor kW, recharge time and efficiency (scaled). The elbow bends at K = 2&ndash;3; <b>K = {{ m.kmeans.k }}</b> was chosen (silhouette {{ m.kmeans.silhouette[m.kmeans.k|string] }}).</p>
+  <div class="scroll-x">
+  <table class="tbl tbl-tight">
+    <thead><tr><th>Cluster</th><th class="num">Cars</th><th class="num">Avg motor (kW)</th><th class="num">Avg recharge (h)</th><th class="num">Avg km/kWh</th></tr></thead>
+    <tbody>
+    {% for c in m.kmeans.clusters %}
+      <tr><td><b>{{ c.name }}</b></td><td class="num">{{ c.vehicles }}</td><td class="num">{{ c.motor }}</td><td class="num">{{ c.recharge }}</td><td class="num">{{ c.efficiency }}</td></tr>
+    {% endfor %}
+    </tbody>
+  </table>
+  </div>
+</section>
+{{ figure("ml_05_kmeans.png", "Fig. 5 — Elbow curve and the three clusters plotted by motor power and efficiency.") }}
+
+<!-- ============ Exp 6 ============ -->
+<section class="card" id="exp6">
+  <h2>Exp 6 &mdash; Gaussian Mixture Model (latent variables)</h2>
+  <p>A GMM assumes the data comes from a few hidden (latent) Gaussian groups and gives each car a <b>probability</b> of belonging to each one, instead of a hard label like K-Means.
+    Trained with the EM algorithm on model year, motor kW, recharge time and efficiency: {{ m.gmm.components }} components, converged in {{ m.gmm.iterations }} iterations.</p>
+  <p>Silhouette {{ m.gmm.silhouette }}, AIC {{ m.gmm.aic }}, BIC {{ m.gmm.bic }}. On average the model is {{ "%.0f"|format(m.gmm.avg_max_probability * 100) }}% sure about a car's state.</p>
+  <div class="scroll-x">
+  <table class="tbl tbl-tight">
+    <thead><tr><th>State</th><th class="num">Cars</th><th class="num">Avg year</th><th class="num">Avg motor (kW)</th><th class="num">Avg recharge (h)</th><th class="num">Avg km/kWh</th></tr></thead>
+    <tbody>
+    {% for s in m.gmm.states %}
+      <tr><td><b>State {{ s.state }}</b></td><td class="num">{{ s.vehicles }}</td><td class="num">{{ s.year }}</td><td class="num">{{ s.motor }}</td><td class="num">{{ s.recharge }}</td><td class="num">{{ s.efficiency }}</td></tr>
+    {% endfor %}
+    </tbody>
+  </table>
+  </div>
+</section>
+{{ figure("ml_06_gmm.png", "Fig. 6 — The four latent states shown on two principal components, and BIC for different numbers of components.") }}
+
+<!-- ============ Exp 7 ============ -->
+<section class="card" id="exp7">
+  <h2>Exp 7 &mdash; Linear and non-linear dimensionality reduction</h2>
+  <p>The {{ m.dimred.original_dims }}-feature data was squeezed down to 2 dimensions to see its structure.</p>
+  <ul class="steps">
+    <li><b>PCA (linear):</b> {{ m.dimred.components_90 }} components keep 90% of the variance; the first two keep {{ "%.0f"|format(m.dimred.pc1_pc2_variance * 100) }}%.</li>
+    <li><b>t-SNE (non-linear):</b> keeps nearby cars close together, so similar models form tight islands. Took {{ m.dimred.tsne_seconds }} s.</li>
+  </ul>
+  <p class="muted small">Colour shows efficiency class. PCA spreads the classes along a broad gradient; t-SNE separates them into clearer local groups but its axes have no direct meaning.</p>
+</section>
+{{ figure("ml_07_dimred.png", "Fig. 7 — Cumulative explained variance, then the same data projected by PCA and by t-SNE.") }}
+
+<!-- ============ Exp 8 ============ -->
+<section class="card" id="exp8">
+  <h2>Exp 8 &mdash; SVM classification</h2>
+  <p>A car is <b>Efficient</b> if it is at or above the median ({{ m.svm.threshold }} km/kWh). The SVM learns the boundary from motor power and recharge time, comparing three kernels (C = 1).</p>
+  <div class="scroll-x">
+  <table class="tbl tbl-tight">
+    <thead><tr><th>Kernel</th><th class="num">Accuracy</th><th class="num">Support vectors</th></tr></thead>
+    <tbody>
+    {% for k in m.svm.kernels %}
+      <tr {% if k.kernel == m.svm.best %}class="best"{% endif %}><td><b>{{ k.kernel }}</b>{% if k.kernel == m.svm.best %} <span class="eff">best</span>{% endif %}</td>
+        <td class="num">{{ "%.1f"|format(k.accuracy * 100) }}%</td><td class="num">{{ k.support_vectors }}</td></tr>
+    {% endfor %}
+    </tbody>
+  </table>
+  </div>
+  <p class="muted small">The RBF kernel can draw curved boundaries (the kernel trick), so it fits best while needing the fewest support vectors.</p>
+</section>
+{{ figure("ml_08_svm.png", "Fig. 8 — Decision regions of the linear, polynomial and RBF kernels.") }}
+
+<!-- ============ Comparison ============ -->
+<section class="card" id="compare">
+  <h2>Classical ML vs deep learning</h2>
+  <p>Six classical regressors were trained to predict efficiency on exactly the same split as the neural networks.</p>
+  <div class="scroll-x">
+  <table class="tbl tbl-tight">
+    <thead><tr><th>Model</th><th>Type</th><th class="num">Train R²</th><th class="num">Test MAE</th><th class="num">Test RMSE</th><th class="num">Test R²</th></tr></thead>
+    <tbody>
+    {% for r in m.regression %}
+      <tr {% if r.name == m.best_ml %}class="best"{% endif %}><td><b>{{ r.name }}</b>{% if r.name == m.best_ml %} <span class="eff">best</span>{% endif %}</td><td class="muted">ML</td>
+        <td class="num">{{ "%.3f"|format(r.train_r2) }}</td><td class="num">{{ "%.3f"|format(r.mae) }}</td><td class="num">{{ "%.3f"|format(r.rmse) }}</td><td class="num"><b>{{ "%.3f"|format(r.r2) }}</b></td></tr>
+    {% endfor %}
+    {% for r in m.dl_rows %}
+      <tr><td>{{ r.name }}</td><td class="muted">DL</td><td class="num">&ndash;</td>
+        <td class="num">{{ "%.3f"|format(r.mae) }}</td><td class="num">{{ "%.3f"|format(r.rmse) }}</td><td class="num">{{ "%.3f"|format(r.r2) }}</td></tr>
+    {% endfor %}
+    </tbody>
+  </table>
+  </div>
+  {% set best_dl = m.dl_rows | sort(attribute="r2") | last %}
+  {% if best_dl %}
+  <p><b>{{ best.name }}</b> (R² {{ "%.3f"|format(best.r2) }}) {% if best.r2 >= best_dl.r2 %}edges out{% else %}comes close to{% endif %}
+    the best neural network, the {{ best_dl.name }} (R² {{ "%.3f"|format(best_dl.r2) }}). On a small table of 1,197 rows, tree ensembles are
+    as strong as deep learning, train in seconds and need no GPU &mdash; deep learning pays off with bigger or sequential data.</p>
+  {% endif %}
+  <p class="muted small">A single Decision Tree overfits (train R² {{ "%.2f"|format((m.regression | selectattr("name", "equalto", "Decision Tree") | first).train_r2) }}); averaging 300 trees in a Random Forest removes most of that variance.</p>
+</section>
+{{ figure("ml_09_ml_vs_dl.png", "Fig. 9 — Test R² for every model on the same 240 test cars. Pink = classical ML, plum = deep learning.") }}
+{{ figure("ml_10_feature_importance.png", "Fig. 10 — What the Random Forest relies on most. Motor power dominates; next come the maker columns for Tesla and Lucid, whose cars are unusually efficient for their power.", narrow=true) }}
+
+<section class="card">
+  <h2>Reproduce it</h2>
+  <pre class="code">ml/.venv/Scripts/python ml/train.py      # deep learning (run first)
+ml/.venv/Scripts/python ml/train_ml.py   # classical ML, about {{ "%.0f"|format(m.seconds_total) }} seconds</pre>
+  <p class="muted small">Libraries: {% for lib, ver in m.versions.items() %}{{ lib }} {{ ver }}{% if not loop.last %} · {% endif %}{% endfor %}. Trained on {{ m.trained_on }}.</p>
+</section>
+{% endif %}
+{% endblock %}

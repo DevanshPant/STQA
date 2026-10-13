@@ -1,0 +1,350 @@
+{
+  "trained_on": "2026-10-13",
+  "seconds_total": 22.7,
+  "split": {
+    "train": 957,
+    "test": 240
+  },
+  "preprocessing": {
+    "missing_values": 0,
+    "makes_after_cleaning": 35,
+    "equal_width": {
+      "Low": 85,
+      "Medium": 589,
+      "High": 426,
+      "Very high": 97
+    },
+    "equal_frequency": {
+      "Low": 301,
+      "Medium": 298,
+      "High": 319,
+      "Very high": 279
+    },
+    "motor_raw_range": [
+      35,
+      930
+    ],
+    "features": 51
+  },
+  "naive_bayes": {
+    "accuracy": 0.6625,
+    "per_class": {
+      "Low": {
+        "precision": 0.719,
+        "recall": 0.939,
+        "f1": 0.814
+      },
+      "Medium": {
+        "precision": 0.25,
+        "recall": 0.105,
+        "f1": 0.148
+      },
+      "High": {
+        "precision": 0.531,
+        "recall": 0.309,
+        "f1": 0.391
+      }
+    },
+    "all_features_accuracy": 0.5958
+  },
+  "decision_tree": {
+    "accuracy": 0.8542,
+    "per_class": {
+      "Low": {
+        "precision": 0.945,
+        "recall": 0.932,
+        "f1": 0.938
+      },
+      "Medium": {
+        "precision": 0.561,
+        "recall": 0.605,
+        "f1": 0.582
+      },
+      "High": {
+        "precision": 0.833,
+        "recall": 0.818,
+        "f1": 0.826
+      }
+    },
+    "depth": 10,
+    "cv_accuracy": 0.86,
+    "top_features": [
+      {
+        "name": "Motor (kW)",
+        "importance": 0.433
+      },
+      {
+        "name": "make_Lucid",
+        "importance": 0.1
+      },
+      {
+        "name": "make_Tesla",
+        "importance": 0.1
+      },
+      {
+        "name": "Power rate",
+        "importance": 0.072
+      },
+      {
+        "name": "Model year",
+        "importance": 0.067
+      }
+    ]
+  },
+  "gradient_descent": {
+    "iterations": 1000,
+    "optimal_cost": 0.2584,
+    "scaled_final_cost": 0.2584,
+    "scaled_converged_at": 52,
+    "raw_final_cost": 0.3547,
+    "raw_diverged_after": 12,
+    "raw_ranges": {
+      "Model year": [
+        2012.0,
+        2026.0
+      ],
+      "Motor (kW)": [
+        35.0,
+        930.0
+      ],
+      "Recharge time (h)": [
+        3.0,
+        18.6
+      ]
+    }
+  },
+  "kmeans": {
+    "k": 3,
+    "silhouette": {
+      "2": 0.42,
+      "3": 0.3,
+      "4": 0.301,
+      "5": 0.282,
+      "6": 0.298,
+      "7": 0.277
+    },
+    "clusters": [
+      {
+        "name": "Efficient, low power",
+        "vehicles": 454,
+        "motor": 208.7,
+        "recharge": 8.23,
+        "efficiency": 5.23
+      },
+      {
+        "name": "Mid power",
+        "vehicles": 459,
+        "motor": 361.2,
+        "recharge": 10.85,
+        "efficiency": 3.99
+      },
+      {
+        "name": "High power",
+        "vehicles": 284,
+        "motor": 521.1,
+        "recharge": 13.76,
+        "efficiency": 3.96
+      }
+    ]
+  },
+  "gmm": {
+    "components": 4,
+    "converged": true,
+    "iterations": 25,
+    "aic": 10853.9,
+    "bic": 11154.1,
+    "silhouette": 0.209,
+    "avg_max_probability": 0.899,
+    "states": [
+      {
+        "state": 0,
+        "vehicles": 516,
+        "year": 2024.9,
+        "motor": 410.8,
+        "recharge": 12.23,
+        "efficiency": 3.81
+      },
+      {
+        "state": 1,
+        "vehicles": 140,
+        "year": 2020.0,
+        "motor": 130.8,
+        "recharge": 7.36,
+        "efficiency": 5.44
+      },
+      {
+        "state": 2,
+        "vehicles": 194,
+        "year": 2020.1,
+        "motor": 436.3,
+        "recharge": 11.39,
+        "efficiency": 5.2
+      },
+      {
+        "state": 3,
+        "vehicles": 347,
+        "year": 2023.8,
+        "motor": 269.8,
+        "recharge": 8.86,
+        "efficiency": 4.6
+      }
+    ]
+  },
+  "dimred": {
+    "original_dims": 51,
+    "components_90": 12,
+    "pc1_pc2_variance": 0.576,
+    "tsne_seconds": 4.2
+  },
+  "svm": {
+    "threshold": 4.37,
+    "kernels": [
+      {
+        "kernel": "linear",
+        "accuracy": 0.75,
+        "support_vectors": 572
+      },
+      {
+        "kernel": "poly",
+        "accuracy": 0.6583,
+        "support_vectors": 746
+      },
+      {
+        "kernel": "rbf",
+        "accuracy": 0.7708,
+        "support_vectors": 472
+      }
+    ],
+    "best": "rbf"
+  },
+  "regression": [
+    {
+      "name": "Linear regression",
+      "family": "ML",
+      "mae": 0.2886,
+      "rmse": 0.3735,
+      "r2": 0.8221,
+      "train_r2": 0.8338
+    },
+    {
+      "name": "Decision Tree",
+      "family": "ML",
+      "mae": 0.3085,
+      "rmse": 0.4451,
+      "r2": 0.7474,
+      "train_r2": 0.8849
+    },
+    {
+      "name": "Random Forest",
+      "family": "ML",
+      "mae": 0.2049,
+      "rmse": 0.2759,
+      "r2": 0.903,
+      "train_r2": 0.9695
+    },
+    {
+      "name": "Gradient Boosting",
+      "family": "ML",
+      "mae": 0.2516,
+      "rmse": 0.3173,
+      "r2": 0.8716,
+      "train_r2": 0.8999
+    },
+    {
+      "name": "KNN (k = 5)",
+      "family": "ML",
+      "mae": 0.2419,
+      "rmse": 0.3272,
+      "r2": 0.8634,
+      "train_r2": 0.9229
+    },
+    {
+      "name": "SVR (RBF)",
+      "family": "ML",
+      "mae": 0.2232,
+      "rmse": 0.3106,
+      "r2": 0.877,
+      "train_r2": 0.9374
+    }
+  ],
+  "best_ml": "Random Forest",
+  "dl_rows": [
+    {
+      "name": "FFNN",
+      "family": "DL",
+      "mae": 0.2276,
+      "rmse": 0.299,
+      "r2": 0.886
+    },
+    {
+      "name": "DNN",
+      "family": "DL",
+      "mae": 0.2146,
+      "rmse": 0.2849,
+      "r2": 0.8965
+    },
+    {
+      "name": "DNN + Dropout",
+      "family": "DL",
+      "mae": 0.2588,
+      "rmse": 0.3311,
+      "r2": 0.8602
+    },
+    {
+      "name": "1D CNN",
+      "family": "DL",
+      "mae": 0.2492,
+      "rmse": 0.3259,
+      "r2": 0.8646
+    }
+  ],
+  "feature_importance": [
+    {
+      "name": "Motor (kW)",
+      "importance": 0.405
+    },
+    {
+      "name": "make_Tesla",
+      "importance": 0.134
+    },
+    {
+      "name": "make_Lucid",
+      "importance": 0.112
+    },
+    {
+      "name": "cls_Full-size",
+      "importance": 0.061
+    },
+    {
+      "name": "Recharge time (h)",
+      "importance": 0.06
+    },
+    {
+      "name": "cls_Sport utility vehicle: Standard",
+      "importance": 0.037
+    },
+    {
+      "name": "Power rate",
+      "importance": 0.035
+    },
+    {
+      "name": "make_GMC",
+      "importance": 0.031
+    },
+    {
+      "name": "Model year",
+      "importance": 0.031
+    },
+    {
+      "name": "cls_Mid-size",
+      "importance": 0.011
+    }
+  ],
+  "versions": {
+    "scikit-learn": "1.9.1",
+    "pandas": "3.0.6",
+    "numpy": "2.5.4",
+    "matplotlib": "3.11.2",
+    "seaborn": "0.13.2"
+  }
+}

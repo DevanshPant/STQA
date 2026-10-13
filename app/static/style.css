@@ -194,7 +194,7 @@ input:focus, select:focus { border-color: var(--rose); outline: none; }
 .tbl a { color: var(--ink); text-decoration: none; }
 .tbl a:hover { color: var(--rose-deep); text-decoration: underline; }
 .tbl td form { margin: 0; }
-.tbl-tight th { background: none; padding: 8px 0; }
+.tbl-tight th { background: none; padding: 8px 12px 8px 0; }
 .tbl-tight td { padding: 8px 10px 8px 0; }
 .num { text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; }
 .tbl-tight .num { padding-right: 18px; }
@@ -282,3 +282,12 @@ code { font-family: Consolas, "Courier New", monospace; font-size: 0.88em; backg
 .code { font-family: Consolas, "Courier New", monospace; font-size: 0.86rem; background: #2b1d24; color: #fbe9ef; padding: 14px 16px; border-radius: 10px; overflow-x: auto; margin: 0 0 10px; }
 .stat-n { overflow-wrap: anywhere; }
 .mlfig-narrow { max-width: 560px; }
+
+.segtabs { display: inline-flex; background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 4px; gap: 4px; }
+.segtabs a { padding: 8px 16px; border-radius: 9px; text-decoration: none; color: var(--ink-2); font-weight: 600; font-size: 0.92rem; }
+.segtabs a:hover { background: var(--blush); color: var(--ink); }
+.segtabs a.on { background: var(--rose); color: #fff; }
+h3 { font-family: var(--serif); font-weight: 600; font-size: 1.02rem; margin: 0 0 6px; }
+.grid-2.inner { gap: 24px; margin-bottom: 8px; }
+.card .grid-2.inner > div { min-width: 0; }
+section[id] { scroll-margin-top: 80px; }

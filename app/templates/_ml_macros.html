@@ -1,0 +1,15 @@
+{% macro figure(file, caption, narrow=false) %}
+  <figure class="mlfig{% if narrow %} mlfig-narrow{% endif %}">
+    <a href="{{ url_for('static', filename='ml/' ~ file) }}" target="_blank" rel="noopener" title="Open full size">
+      <img src="{{ url_for('static', filename='ml/' ~ file) }}" alt="{{ caption }}" loading="lazy">
+    </a>
+    <figcaption>{{ caption }} <span class="muted">· click to open full size</span></figcaption>
+  </figure>
+{% endmacro %}
+
+{% macro tabs(active) %}
+  <nav class="segtabs" aria-label="Model sections">
+    <a href="{{ url_for('views.model') }}" {% if active == 'dl' %}class="on" aria-current="page"{% endif %}>Deep learning</a>
+    <a href="{{ url_for('views.model_ml') }}" {% if active == 'ml' %}class="on" aria-current="page"{% endif %}>Machine learning</a>
+  </nav>
+{% endmacro %}

@@ -176,16 +176,24 @@ def trips():
                            errors=errors, form=request.form, preselect=preselect), (400 if errors else 200)
 
 
+def _load_ml(name):
+    # the metrics files and graphs are produced offline by ml/train.py and ml/train_ml.py
+    try:
+        return json.loads((Path(current_app.config["ML_DIR"]) / name).read_text(encoding="utf-8"))
+    except (OSError, ValueError):
+        return None
+
+
 @bp.route("/model")
 @login_required
 def model():
-    # metrics.json and the graphs are produced offline by ml/train.py
-    path = Path(current_app.config["ML_DIR"]) / "metrics.json"
-    try:
-        metrics = json.loads(path.read_text(encoding="utf-8"))
-    except (OSError, ValueError):
-        metrics = None
-    return render_template("model.html", m=metrics)
+    return render_template("model.html", m=_load_ml("metrics.json"))
+
+
+@bp.route("/model/ml")
+@login_required
+def model_ml():
+    return render_template("model_ml.html", m=_load_ml("ml_metrics.json"))
 
 
 @bp.route("/trips/<int:trip_id>/delete", methods=["POST"])

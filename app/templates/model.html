@@ -1,13 +1,6 @@
 {% extends "base.html" %}
 {% block title %}Model{% endblock %}
-{% macro figure(file, caption, narrow=false) %}
-  <figure class="mlfig{% if narrow %} mlfig-narrow{% endif %}">
-    <a href="{{ url_for('static', filename='ml/' ~ file) }}" target="_blank" rel="noopener" title="Open full size">
-      <img src="{{ url_for('static', filename='ml/' ~ file) }}" alt="{{ caption }}" loading="lazy">
-    </a>
-    <figcaption>{{ caption }} <span class="muted">· click to open full size</span></figcaption>
-  </figure>
-{% endmacro %}
+{% from "_ml_macros.html" import figure, tabs %}
 {% block content %}
 <div class="pagehead">
   <div>
@@ -16,6 +9,7 @@
     <p class="muted">Deep learning on the same EV dataset this site runs on, following DL Experiments 2&ndash;7.
       Devansh Pant &middot; 16010423028 &middot; Batch B-1</p>
   </div>
+  {{ tabs('dl') }}
 </div>
 
 {% if not m %}

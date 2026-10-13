@@ -41,3 +41,42 @@ def test_model_page_without_results(app, auth_client, tmp_path):
     r = auth_client.get("/model")
     assert r.status_code == 200
     assert b"aren't here yet" in r.data
+
+
+# ---------- machine learning tab ----------
+
+def test_ml_page_needs_login(client):
+    r = client.get("/model/ml")
+    assert r.status_code == 302
+    assert "/login" in r.headers["Location"]
+
+
+def test_ml_page_shows_all_experiments(auth_client):
+    metrics = json.loads((ML_DIR / "ml_metrics.json").read_text(encoding="utf-8"))
+    html = auth_client.get("/model/ml").data.decode()
+    for heading in ["Data preprocessing", "Naive Bayes", "Decision Tree", "Gradient descent",
+                    "K-Means", "Gaussian Mixture Model", "dimensionality reduction", "SVM classification",
+                    "Classical ML vs deep learning"]:
+        assert heading in html, heading
+    assert metrics["best_ml"] in html
+    assert f"{metrics['decision_tree']['accuracy'] * 100:.1f}%" in html
+
+
+def test_every_ml_graph_exists(auth_client):
+    html = auth_client.get("/model/ml").data.decode()
+    images = set(re.findall(r'src="/static/ml/([^"]+)"', html))
+    assert len(images) == 10
+    for name in images:
+        assert (ML_DIR / name).is_file(), name
+
+
+def test_tabs_link_both_pages(auth_client):
+    dl = auth_client.get("/model").data
+    ml = auth_client.get("/model/ml").data
+    assert b'href="/model/ml"' in dl and b'href="/model"' in ml
+    assert b'class="on">Model</a>' in ml   # navbar stays on Model
+
+
+def test_ml_page_without_results(app, auth_client, tmp_path):
+    app.config["ML_DIR"] = str(tmp_path)
+    assert b"aren't here yet" in auth_client.get("/model/ml").data
